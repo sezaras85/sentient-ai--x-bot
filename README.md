@@ -44,7 +44,7 @@ nano .env
 
 Şu satırları ekle (kendi API bilgilerinle değiştir):
 ```bash
-TBEARER_TOKEN = "BEARER_TOKEN YAZ"
+BEARER_TOKEN = "BEARER_TOKEN YAZ"
 API_KEY = "API_KEY YAZ"
 API_SECRET = "API_SECRET YAZ"
 ACCESS_TOKEN = "ACCESS_TOKEN YAZ"
