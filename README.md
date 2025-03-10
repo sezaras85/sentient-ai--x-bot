@@ -26,11 +26,12 @@ FIREWORKS_API_KEY = "FIREWORKS_AI_API_KEY"
 ```
 
 3️⃣ Ana Python Dosyasını (bot.py) Çalıştırın
-
+```bash
 python bot.py
-
+```
 📝 Kod (bot.py)
 
+```bash
 import tweepy
 import requests
 import schedule
@@ -104,11 +105,13 @@ schedule.every(5).minutes.do(reply_to_mentions)
 while True:
     schedule.run_pending()
     time.sleep(60)
+```
 
 Botu Arka Planda Çalıştırma (Ubuntu)
 Eğer botu arka planda çalıştırmak istiyorsanız:
-
+```bash
 nohup python bot.py &
+```
 
 
 
