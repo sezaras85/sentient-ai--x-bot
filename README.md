@@ -15,12 +15,15 @@ Bot, **Sentient AI ve yapay zeka** hakkında tweetler paylaşır ve alıntılana
 2️⃣ Twitter API Anahtarlarını ve Fireworks AI API Anahtarını Tanımlayın
 config.py dosyanızı oluşturun ve aşağıdaki bilgileri girin:
 
+```bash
+
 BEARER_TOKEN = "TWITTER_BEARER_TOKEN"
 API_KEY = "TWITTER_API_KEY"
 API_SECRET = "TWITTER_API_SECRET"
 ACCESS_TOKEN = "TWITTER_ACCESS_TOKEN"
 ACCESS_SECRET = "TWITTER_ACCESS_SECRET"
 FIREWORKS_API_KEY = "FIREWORKS_AI_API_KEY"
+```
 
 3️⃣ Ana Python Dosyasını (bot.py) Çalıştırın
 
