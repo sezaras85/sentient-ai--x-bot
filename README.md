@@ -12,37 +12,67 @@ Bot, **Sentient AI ve yapay zeka** hakkında tweetler paylaşır ve alıntılana
 ✅ **Yanıtları terminalde görüntüler**.  
 ✅ **Ubuntu ve Python üzerinde çalışır** ve **arka planda çalışması için `nohup` kullanılır**.
 
-2️⃣ Twitter API Anahtarlarını ve Fireworks AI API Anahtarını Tanımlayın
-config.py dosyanızı oluşturun ve aşağıdaki bilgileri girin:
+Öncelikle, sisteminin aşağıdaki gereksinimlere sahip olduğundan emin ol:
 
+✅ Ubuntu 20.04+
+✅ Python 3.8+
+✅ pip & venv (Python sanal ortamı)
+✅ API erişim anahtarı (Fireworks AI platformundan alman gerekebilir)
+
+1. Twitter API Anahtarlarını Al
+Öncelikle Twitter Developer Portal üzerinden bir Twitter API hesabı oluştur ve aşağıdaki bilgileri al:
+
+API Key
+API Key Secret
+Access Token
+Access Token Secret
+Bearer Token
+Bu bilgileri aldıktan sonra projemizde kullanacağız.
+
+Eğer pip ve venv yüklü değilse, terminalde şu komutları çalıştırarak yükleyebilirsin:
 ```bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install python3 python3-pip python3-venv -y
+pip install tweepy requests python-dotenv schedule
 
-BEARER_TOKEN = "TWITTER_BEARER_TOKEN"
-API_KEY = "TWITTER_API_KEY"
-API_SECRET = "TWITTER_API_SECRET"
-ACCESS_TOKEN = "TWITTER_ACCESS_TOKEN"
-ACCESS_SECRET = "TWITTER_ACCESS_SECRET"
-FIREWORKS_API_KEY = "FIREWORKS_AI_API_KEY"
 ```
 
-3️⃣ Ana Python Dosyasını (bot.py) Çalıştırın
+3. .env Dosyasını Oluştur ve API Anahtarlarını Sakla
 ```bash
-python bot.py
+nano .env
 ```
-📝 Kod (bot.py)
 
+Şu satırları ekle (kendi API bilgilerinle değiştir):
+```bash
+TWITTER_API_KEY="API_KEYİNİZ"
+TWITTER_API_SECRET="API_SECRETİNİZ"
+TWITTER_ACCESS_TOKEN="ACCESS_TOKENİNİZ"
+TWITTER_ACCESS_SECRET="ACCESS_SECRETİNİZ"
+TWITTER_BEARER_TOKEN="BEARER_TOKENİNİZ"
+FIREWORKS_API_KEY="FIREWORKS_AI_KEYİNİZ"
+```
+CTRL + X, sonra Y ve Enter ile kaydet.
+
+4. Twitter Bot Kodunu Yaz
+Şimdi twitter_bot.py dosyasını oluştur ve şu kodları ekle:
 ```bash
 import tweepy
 import requests
 import schedule
 import time
 
-# API Anahtarları
-from config import BEARER_TOKEN, API_KEY, API_SECRET, ACCESS_TOKEN, ACCESS_SECRET, FIREWORKS_API_KEY
+# Twitter API Keys
+BEARER_TOKEN = "AAAAAAAAAAAAAAAAAAAAALZFzwEAAAAADlfmHAciakBloxxI%2BRWwVNXUkAM%3DxkaiQiB0VNsqypPiXQnBnuNRmiWojHKyLwnTuLCdlqYxcQu6Sl"
+API_KEY = "vbgrRAdpyb3vP45Dug2DSPgQV"
+API_SECRET = "rrW3fueAfblrqIDCc5w91TrK9Hig4HRibybQZBSQupijQ8fAiP"
+ACCESS_TOKEN = "1577603062654537730-EfOeSMWrpCZvhWUJ3SDU2IYFDDETUY"
+ACCESS_SECRET = "vAZMkMa7GfG7pS45nii8Dz8AnPnAvFHfUDXJozZmdiUna"
 
+# Fireworks AI API Key
+FIREWORKS_API_KEY = "fw_3ZZ3kvn3CEEpSSMauJPFayeF"
 FIREWORKS_API_URL = "https://api.fireworks.ai/inference/v1/completions"
 
-# Twitter API Kimlik Doğrulama
+# Twitter API Authentication
 client = tweepy.Client(
     bearer_token=BEARER_TOKEN,
     consumer_key=API_KEY,
@@ -52,23 +82,35 @@ client = tweepy.Client(
 )
 
 def generate_dynamic_reply(mention_text):
-    """ Fireworks AI kullanarak alıntı tweet'e yanıt üretir (200 karakter sınırı). """
-    headers = {"Authorization": f"Bearer {FIREWORKS_API_KEY}", "Content-Type": "application/json"}
-    prompt = f"Generate a short, safe, and engaging reply. Max 200 characters. Tweet: {mention_text}"
+    """ Generates a dynamic reply using Fireworks AI based on the mention text. """
+    headers = {
+        "Authorization": f"Bearer {FIREWORKS_API_KEY}",
+        "Content-Type": "application/json"
+    }
     
-    payload = {"model": "accounts/fireworks/models/dobby-70b", "prompt": prompt, "max_tokens": 100, "temperature": 0.7}
+    # Create a prompt based on the mention text
+    prompt = f"Generate a short, positive, and safe response to the following tweet. Maximum 200 characters. Here is the tweet: {mention_text}"
+    
+    payload = {
+        "model": "accounts/sentientfoundation/models/dobby-unhinged-llama-3-3-70b-new",
+        "prompt": prompt,
+        "max_tokens": 100,
+        "temperature": 0.7,
+        "top_p": 0.9
+    }
     
     response = requests.post(FIREWORKS_API_URL, json=payload, headers=headers)
+    
     if response.status_code == 200:
         ai_reply = response.json()["choices"][0]["text"].strip()
-        print(f"Generated AI Reply: {ai_reply}")  # Yanıtı terminalde göster
-        return ai_reply[:200]
+        print(f"Generated AI Reply: {ai_reply}")  # Print the AI-generated reply to the console
+        return ai_reply[:200]  # Limit to 200 characters
     else:
         print("Fireworks API Error:", response.json())
         return None
 
 def post_tweet(text):
-    """ Tweet gönderme fonksiyonu """
+    """ Posts a tweet using Twitter API. """
     try:
         response = client.create_tweet(text=text)
         print(f"Tweet posted! Tweet ID: {response.data['id']}")
@@ -76,42 +118,87 @@ def post_tweet(text):
         print("Tweet failed:", e)
 
 def send_sentient_ai_tweet():
-    """ Sentient AI hakkında bir tweet atar. """
-    prompt = "Write an engaging tweet about Sentient AI. Max 200 characters."
-    tweet_text = generate_dynamic_reply(prompt)
+    """ Posts an AI-generated tweet about Sentient AI in English. """
+    prompt = "Write an interesting, positive, and safe tweet about Sentient AI. Maximum 200 characters. The tweet should be in English."
+    tweet_text = generate_dynamic_reply(prompt)  # Dynamically generated tweet content
     if tweet_text:
         post_tweet(tweet_text)
 
 def reply_to_mentions():
-    """ Alıntılanan tweetleri kontrol edip yanıt verir. """
+    """ Checks mentions and replies to quotes and mentions using Fireworks AI. """
     mentions = client.get_mentions()
+    
+    # Loop through mentions and reply to the quotes
     for mention in mentions.data:
-        reply_text = generate_dynamic_reply(mention.text)
-        if reply_text:
-            response = client.create_tweet(text=f"@{mention.author_id} {reply_text}", in_reply_to_status_id=mention.id)
-            print(f"Reply tweet sent: {response.data['id']}")
+        if "quoted_status" in mention.text:  # Check if it's a quote tweet
+            reply_text = generate_dynamic_reply(mention.text)  # Generate dynamic reply based on the mention text
+            if reply_text:
+                response = client.create_tweet(
+                    text=f"@{mention.author_id} {reply_text}",
+                    in_reply_to_status_id=mention.id  # This replies to the quoted tweet
+                )
+                print(f"Reply tweet sent: {response.data['id']}")
 
-# İlk tweet hemen atılsın
+# Post the first tweet immediately
 send_sentient_ai_tweet()
 
-# Günlük Sentient AI tweetleri (10:00 & 18:00)
+# Schedule 2 automatic Sentient AI tweets daily (10:00 AM and 6:00 PM)
 schedule.every().day.at("10:00").do(send_sentient_ai_tweet)
 schedule.every().day.at("18:00").do(send_sentient_ai_tweet)
 
-# 5 dakikada bir alıntı tweetleri kontrol et ve yanıtla
+# Check mentions and reply to them every 5 minutes
 schedule.every(5).minutes.do(reply_to_mentions)
 
-# Sürekli çalıştır
+# Keep the bot running
 while True:
     schedule.run_pending()
-    time.sleep(60)
+    time.sleep(60)  # Wait 1 minute
+```
+5. Twitter Botunu Çalıştır
+   Şimdi terminalde botu başlat:
+ ```bash  
+ python3 twitter_bot.py
+```
+Bot artık alıntılanan tweetlere cevap verecek!
+✅ Her gün 10:00 ve 18:00’de Sentient AI hakkında tweet atacak!
+
+Botu arka planda çalıştırmak için:
+
+```bash
+nohup python3 twitter_bot.py &
 ```
 
-Botu Arka Planda Çalıştırma (Ubuntu)
-Eğer botu arka planda çalıştırmak istiyorsanız:
-```bash
-nohup python bot.py &
-```
+SONUÇ: Sentient AI Twitter Botun Hazır!
+🔹 Alıntı yapılan tweetlere otomatik cevap veriyor.
+🔹 Günde 2 defa Sentient AI hakkında tweet atıyor.
+🔹 Fireworks AI kullanarak doğal dilde yanıt oluşturuyor.
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+   
+   
+
+
+
+
+
+
+
+
+
 
 
 
